@@ -6239,17 +6239,42 @@ namespace ts {
             return parseVariableDeclaration(/*allowExclamation*/ true);
         }
 
-        function parseVariableDeclaration(allowExclamation?: boolean): VariableDeclaration {
+        function parseVariableDeclaration(allowExclamation?: boolean, allowQuestionMark?: boolean): VariableDeclaration {
             const pos = getNodePos();
             const name = parseIdentifierOrPattern(Diagnostics.Private_identifiers_are_not_allowed_in_variable_declarations);
+            /**
+             * These definitions can be changed to the following form after this
+             * functionality is added:
+             *
+             * let questionToken?: QuestionToken;
+             */
             let exclamationToken: ExclamationToken | undefined;
-            if (allowExclamation && name.kind === SyntaxKind.Identifier &&
-                token() === SyntaxKind.ExclamationToken && !scanner.hasPrecedingLineBreak()) {
-                exclamationToken = parseTokenNode<Token<SyntaxKind.ExclamationToken>>();
+            let questionToken: QuestionToken | undefined;
+
+            if (name.kind === SyntaxKind.Identifier && !scanner.hasPrecedingLineBreak()) {
+                const thisToken = token();
+                // switch (token()) {
+                //     case SyntaxKind.ExclamationToken:
+                //         exclamationToken = parseTokenNode<Token<SyntaxKind.ExclamationToken>>();
+                //         break;
+                //     case SyntaxKind.QuestionToken:
+                //         questionToken = parseTokenNode<Token<SyntaxKind.QuestionToken>>();
+                //         break;
+                // }
+                if (allowExclamation) {
+                    if (thisToken === SyntaxKind.ExclamationToken && !scanner.hasPrecedingLineBreak()) {
+                        exclamationToken = parseTokenNode<Token<SyntaxKind.ExclamationToken>>();
+                    }
+                }
+                else if (allowQuestionMark) {
+                    if (thisToken === SyntaxKind.QuestionToken && !scanner.hasPrecedingLineBreak()) {
+                        questionToken = parseTokenNode<Token<SyntaxKind.QuestionToken>>();
+                    }
+                }
             }
             const type = parseTypeAnnotation();
             const initializer = isInOrOfKeyword(token()) ? undefined : parseInitializer();
-            const node = factory.createVariableDeclaration(name, exclamationToken, type, initializer);
+            const node = factory.createVariableDeclaration(name, exclamationToken, type, initializer, questionToken);
             return finishNode(node, pos);
         }
 
@@ -6289,8 +6314,12 @@ namespace ts {
                 const savedDisallowIn = inDisallowInContext();
                 setDisallowInContext(inForStatementInitializer);
 
-                declarations = parseDelimitedList(ParsingContext.VariableDeclarations,
-                    inForStatementInitializer ? parseVariableDeclaration : parseVariableDeclarationAllowExclamation);
+                declarations = parseDelimitedList(
+                    ParsingContext.VariableDeclarations,
+                    inForStatementInitializer
+                        ? parseVariableDeclaration
+                        : parseVariableDeclarationAllowExclamation
+                );
 
                 setDisallowInContext(savedDisallowIn);
             }

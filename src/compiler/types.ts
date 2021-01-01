@@ -1243,6 +1243,7 @@ namespace ts {
         readonly parent: VariableDeclarationList | CatchClause;
         readonly name: BindingName;                    // Declared variable name
         readonly exclamationToken?: ExclamationToken;  // Optional definite assignment assertion
+        readonly questionToken?: QuestionToken;        // Optional nullable assertion
         readonly type?: TypeNode;                      // Optional type annotation
         readonly initializer?: Expression;             // Optional initializer
     }
@@ -7057,7 +7058,7 @@ namespace ts {
         createTryStatement(tryBlock: Block, catchClause: CatchClause | undefined, finallyBlock: Block | undefined): TryStatement;
         updateTryStatement(node: TryStatement, tryBlock: Block, catchClause: CatchClause | undefined, finallyBlock: Block | undefined): TryStatement;
         createDebuggerStatement(): DebuggerStatement;
-        createVariableDeclaration(name: string | BindingName, exclamationToken?: ExclamationToken, type?: TypeNode, initializer?: Expression): VariableDeclaration;
+        createVariableDeclaration(name: string | BindingName, exclamationToken?: ExclamationToken, type?: TypeNode, initializer?: Expression, QuestionToken?: QuestionToken): VariableDeclaration;
         updateVariableDeclaration(node: VariableDeclaration, name: BindingName, exclamationToken: ExclamationToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): VariableDeclaration;
         createVariableDeclarationList(declarations: readonly VariableDeclaration[], flags?: NodeFlags): VariableDeclarationList;
         updateVariableDeclarationList(node: VariableDeclarationList, declarations: readonly VariableDeclaration[]): VariableDeclarationList;

@@ -3394,7 +3394,13 @@ namespace ts {
         }
 
         // @api
-        function createVariableDeclaration(name: string | BindingName, exclamationToken: ExclamationToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined) {
+        function createVariableDeclaration(
+            name: string | BindingName,
+            exclamationToken?: ExclamationToken,
+            type?: TypeNode,
+            initializer?: Expression,
+            questionToken?: QuestionToken,
+        ) {
             const node = createBaseVariableLikeDeclaration<VariableDeclaration>(
                 SyntaxKind.VariableDeclaration,
                 /*decorators*/ undefined,
@@ -3403,21 +3409,43 @@ namespace ts {
                 type,
                 initializer && parenthesizerRules().parenthesizeExpressionForDisallowedComma(initializer)
             );
+
+            /** TS modifications */
+            node.questionToken = questionToken;
             node.exclamationToken = exclamationToken;
+
             node.transformFlags |= propagateChildFlags(node.exclamationToken);
-            if (exclamationToken) {
+            node.transformFlags |= propagateChildFlags(node.questionToken);
+
+            if (exclamationToken || questionToken) {
                 node.transformFlags |= TransformFlags.ContainsTypeScript;
             }
             return node;
         }
 
         // @api
-        function updateVariableDeclaration(node: VariableDeclaration, name: BindingName, exclamationToken: ExclamationToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined) {
+        function updateVariableDeclaration(
+            node: VariableDeclaration,
+            name: BindingName,
+            exclamationToken?: ExclamationToken,
+            type?: TypeNode,
+            initializer?: Expression,
+            questionToken?: QuestionToken,
+        ) {
             return node.name !== name
                 || node.type !== type
                 || node.exclamationToken !== exclamationToken
                 || node.initializer !== initializer
-                ? update(createVariableDeclaration(name, exclamationToken, type, initializer), node)
+                ? update(
+                    createVariableDeclaration(
+                        name,
+                        exclamationToken,
+                        type,
+                        initializer,
+                        questionToken,
+                    ),
+                    node
+                )
                 : node;
         }
 
