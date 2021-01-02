@@ -1243,7 +1243,7 @@ namespace ts {
         readonly parent: VariableDeclarationList | CatchClause;
         readonly name: BindingName;                    // Declared variable name
         readonly exclamationToken?: ExclamationToken;  // Optional definite assignment assertion
-        readonly questionToken?: QuestionToken;        // Optional nullable assertion
+        readonly questionToken?: QuestionToken;        // Present on optional variable
         readonly type?: TypeNode;                      // Optional type annotation
         readonly initializer?: Expression;             // Optional initializer
     }
@@ -4805,6 +4805,7 @@ namespace ts {
         HasNeverType      = 1 << 17,        // Synthetic property with at least one never type in constituents
         Mapped            = 1 << 18,        // Property of mapped type
         StripOptional     = 1 << 19,        // Strip optionality in mapped property
+        OptionalVariable  = 1 << 20,        // Optional variable
         Synthetic = SyntheticProperty | SyntheticMethod,
         Discriminant = HasNonUniformType | HasLiteralType,
         Partial = ReadPartial | WritePartial
@@ -7058,7 +7059,7 @@ namespace ts {
         createTryStatement(tryBlock: Block, catchClause: CatchClause | undefined, finallyBlock: Block | undefined): TryStatement;
         updateTryStatement(node: TryStatement, tryBlock: Block, catchClause: CatchClause | undefined, finallyBlock: Block | undefined): TryStatement;
         createDebuggerStatement(): DebuggerStatement;
-        createVariableDeclaration(name: string | BindingName, exclamationToken?: ExclamationToken, type?: TypeNode, initializer?: Expression, QuestionToken?: QuestionToken): VariableDeclaration;
+        createVariableDeclaration(name: string | BindingName, questionOrExclamationToken?: QuestionToken | ExclamationToken, type?: TypeNode, initializer?: Expression, QuestionToken?: QuestionToken): VariableDeclaration;
         updateVariableDeclaration(node: VariableDeclaration, name: BindingName, exclamationToken: ExclamationToken | undefined, type: TypeNode | undefined, initializer: Expression | undefined): VariableDeclaration;
         createVariableDeclarationList(declarations: readonly VariableDeclaration[], flags?: NodeFlags): VariableDeclarationList;
         updateVariableDeclarationList(node: VariableDeclarationList, declarations: readonly VariableDeclaration[]): VariableDeclarationList;

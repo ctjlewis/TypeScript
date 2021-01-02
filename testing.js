@@ -1,3 +1,10 @@
 "use strict";
-exports.__esModule = true;
-exports.string = exports.a = void 0;
+var a;
+a = undefined;
+// function testing()?: string {
+//     return "test";
+// }
+// let a: string | undefined;
+// function testing(): string {
+//     return "test";
+// }

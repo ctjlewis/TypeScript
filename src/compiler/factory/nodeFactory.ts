@@ -3396,10 +3396,9 @@ namespace ts {
         // @api
         function createVariableDeclaration(
             name: string | BindingName,
-            exclamationToken?: ExclamationToken,
+            questionOrExclamationToken?: QuestionToken | ExclamationToken,
             type?: TypeNode,
             initializer?: Expression,
-            questionToken?: QuestionToken,
         ) {
             const node = createBaseVariableLikeDeclaration<VariableDeclaration>(
                 SyntaxKind.VariableDeclaration,
@@ -3409,17 +3408,18 @@ namespace ts {
                 type,
                 initializer && parenthesizerRules().parenthesizeExpressionForDisallowedComma(initializer)
             );
-
-            /** TS modifications */
-            node.questionToken = questionToken;
-            node.exclamationToken = exclamationToken;
-
-            node.transformFlags |= propagateChildFlags(node.exclamationToken);
-            node.transformFlags |= propagateChildFlags(node.questionToken);
-
-            if (exclamationToken || questionToken) {
+            if (questionOrExclamationToken) {
                 node.transformFlags |= TransformFlags.ContainsTypeScript;
+                if (isQuestionToken(questionOrExclamationToken)) {
+                    node.questionToken = questionOrExclamationToken;
+                    node.flags |= SymbolFlags.Optional;
+                }
+                else if (isExclamationToken(questionOrExclamationToken)) {
+                    node.exclamationToken = questionOrExclamationToken;
+                }
             }
+            node.transformFlags |=
+                propagateChildFlags(node.questionToken) | propagateChildFlags(node.exclamationToken);
             return node;
         }
 
@@ -3427,22 +3427,21 @@ namespace ts {
         function updateVariableDeclaration(
             node: VariableDeclaration,
             name: BindingName,
-            exclamationToken?: ExclamationToken,
+            questionOrExclamationToken?: QuestionToken | ExclamationToken,
             type?: TypeNode,
             initializer?: Expression,
-            questionToken?: QuestionToken,
         ) {
             return node.name !== name
                 || node.type !== type
-                || node.exclamationToken !== exclamationToken
+                || node.questionToken !== questionOrExclamationToken
+                || node.exclamationToken !== questionOrExclamationToken
                 || node.initializer !== initializer
                 ? update(
                     createVariableDeclaration(
                         name,
-                        exclamationToken,
+                        questionOrExclamationToken,
                         type,
                         initializer,
-                        questionToken,
                     ),
                     node
                 )

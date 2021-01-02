@@ -8110,8 +8110,11 @@ namespace ts {
             const isOptional = includeOptionality && (
                 isParameter(declaration) && isJSDocOptionalParameter(declaration)
                 || isOptionalJSDocPropertyLikeTag(declaration)
-                || !isBindingElement(declaration) && !isVariableDeclaration(declaration) && !!declaration.questionToken);
+                || !isBindingElement(declaration) && !!declaration.questionToken);
 
+            if (isOptional) {
+                console.log(declaration);
+            }
             // Use type from type annotation if one is present
             const declaredType = tryGetTypeFromEffectiveTypeNode(declaration);
             if (declaredType) {
@@ -10727,9 +10730,14 @@ namespace ts {
                 // When creating an optional property in strictNullChecks mode, if 'undefined' isn't assignable to the
                 // type, we include 'undefined' in the type. Similarly, when creating a non-optional property in strictNullChecks
                 // mode, if the underlying property is optional we remove 'undefined' from the type.
-                let type = strictNullChecks && symbol.flags & SymbolFlags.Optional && !maybeTypeOfKind(propType, TypeFlags.Undefined | TypeFlags.Void) ? getOptionalType(propType) :
-                    symbol.checkFlags & CheckFlags.StripOptional ? getTypeWithFacts(propType, TypeFacts.NEUndefined) :
-                    propType;
+                let type =
+                    strictNullChecks &&
+                    symbol.flags & SymbolFlags.Optional &&
+                    !maybeTypeOfKind(propType, TypeFlags.Undefined | TypeFlags.Void)
+                        ? getOptionalType(propType)
+                        : symbol.checkFlags & CheckFlags.StripOptional
+                            ? getTypeWithFacts(propType, TypeFacts.NEUndefined)
+                            : propType;
                 if (!popTypeResolution()) {
                     error(currentNode, Diagnostics.Type_of_property_0_circularly_references_itself_in_mapped_type_1, symbolToString(symbol), typeToString(mappedType));
                     type = errorType;
@@ -40130,7 +40138,7 @@ namespace ts {
                     }
                 }
             }
-
+            // Disallow non-null assertion without initializer
             if (node.exclamationToken && (node.parent.parent.kind !== SyntaxKind.VariableStatement || !node.type || node.initializer || node.flags & NodeFlags.Ambient)) {
                 const message = node.initializer
                     ? Diagnostics.Declarations_with_initializers_cannot_also_have_definite_assignment_assertions
@@ -40139,7 +40147,10 @@ namespace ts {
                         : Diagnostics.A_definite_assignment_assertion_is_not_permitted_in_this_context;
                 return grammarErrorOnNode(node.exclamationToken, message);
             }
-
+            // ...
+            // No need to check for questionToken as optional variables only
+            // imply type union with `undefined` ...
+            // ...
             const moduleKind = getEmitModuleKind(compilerOptions);
             if (moduleKind < ModuleKind.ES2015 && moduleKind !== ModuleKind.System &&
                 !(node.parent.parent.flags & NodeFlags.Ambient) && hasSyntacticModifier(node.parent.parent, ModifierFlags.Export)) {
