@@ -6247,21 +6247,40 @@ namespace ts {
             return parseBindingIdentifier(privateIdentifierDiagnosticMessage);
         }
 
-        function parseVariableDeclarationAllowExclamation() {
-            return parseVariableDeclaration(/*allowExclamation*/ true);
+        function parseVariableDeclarationAllowNullableSpecifiers() {
+            return parseVariableDeclaration(/*questionOrExclamationToken*/ true);
         }
 
-        function parseVariableDeclaration(allowExclamation?: boolean): VariableDeclaration {
+        function parseVariableDeclaration(questionOrExclamationToken?: boolean): VariableDeclaration {
             const pos = getNodePos();
             const name = parseIdentifierOrPattern(Diagnostics.Private_identifiers_are_not_allowed_in_variable_declarations);
+            /**
+             * These definitions can be changed to the following form after this
+             * functionality is added:
+             *
+             * let questionToken?: QuestionToken;
+             */
+            let questionToken: QuestionToken | undefined;
             let exclamationToken: ExclamationToken | undefined;
-            if (allowExclamation && name.kind === SyntaxKind.Identifier &&
-                token() === SyntaxKind.ExclamationToken && !scanner.hasPrecedingLineBreak()) {
-                exclamationToken = parseTokenNode<Token<SyntaxKind.ExclamationToken>>();
+
+            if (questionOrExclamationToken) {
+                switch (token()) {
+                    case SyntaxKind.ExclamationToken:
+                        exclamationToken = parseTokenNode<Token<SyntaxKind.ExclamationToken>>();
+                        break;
+                    case SyntaxKind.QuestionToken:
+                        questionToken = parseTokenNode<Token<SyntaxKind.QuestionToken>>();
+                        break;
+                }
             }
             const type = parseTypeAnnotation();
             const initializer = isInOrOfKeyword(token()) ? undefined : parseInitializer();
-            const node = factory.createVariableDeclaration(name, exclamationToken, type, initializer);
+            const node = factory.createVariableDeclaration(
+                name,
+                questionToken || exclamationToken,
+                type,
+                initializer,
+            );
             return finishNode(node, pos);
         }
 
@@ -6301,8 +6320,12 @@ namespace ts {
                 const savedDisallowIn = inDisallowInContext();
                 setDisallowInContext(inForStatementInitializer);
 
-                declarations = parseDelimitedList(ParsingContext.VariableDeclarations,
-                    inForStatementInitializer ? parseVariableDeclaration : parseVariableDeclarationAllowExclamation);
+                declarations = parseDelimitedList(
+                    ParsingContext.VariableDeclarations,
+                    inForStatementInitializer
+                        ? parseVariableDeclaration
+                        : parseVariableDeclarationAllowNullableSpecifiers
+                );
 
                 setDisallowInContext(savedDisallowIn);
             }
